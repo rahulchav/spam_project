@@ -29,7 +29,7 @@ exports.searchKey = catchAsync(async (req, res, next) => {
           phone: {
             [Op.iLike]: `%${searchString}%`
           },
-          userId: { [Op.ne]: null }
+          // userId: { [Op.ne]: null }
         },
         {
           name: {
