@@ -3,7 +3,7 @@ module.exports = (sequelize, DataTypes) => {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
     },
     userId: {
       type: DataTypes.INTEGER,
@@ -12,11 +12,11 @@ module.exports = (sequelize, DataTypes) => {
     phone: {
       type: DataTypes.STRING,
       allowNull: false,
-    }
+    },
   });
 
   spamtransactions.associate = (models) => {
-    spamtransactions.belongsTo(models.users, { foreignKey: 'userId' });
+    spamtransactions.belongsTo(models.users, { foreignKey: "userId" });
   };
 
   return spamtransactions;

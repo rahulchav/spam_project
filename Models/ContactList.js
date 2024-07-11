@@ -1,9 +1,9 @@
 module.exports = (sequelize, DataTypes) => {
-  const contactlists = sequelize.define('contactlists', {
+  const contactlists = sequelize.define("contactlists", {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
     },
     userId: {
       type: DataTypes.INTEGER,
@@ -16,11 +16,11 @@ module.exports = (sequelize, DataTypes) => {
     phone: {
       type: DataTypes.STRING,
       allowNull: false,
-    }
+    },
   });
 
   contactlists.associate = (models) => {
-    contactlists.belongsTo(models.users, { foreignKey: 'userId' });
+    contactlists.belongsTo(models.users, { foreignKey: "userId" });
   };
 
   return contactlists;

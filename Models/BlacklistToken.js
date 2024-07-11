@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-      unique: true
+      unique: true,
     },
     token: {
       type: DataTypes.STRING,
@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
     exp: {
       type: DataTypes.DATE,
       allowNull: false,
-    }
+    },
   });
 
   return blacklistedtokens;

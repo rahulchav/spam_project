@@ -1,9 +1,9 @@
 module.exports = (sequelize, DataTypes) => {
-  const globaldbs = sequelize.define('globaldbs', {
+  const globaldbs = sequelize.define("globaldbs", {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
     },
     userId: {
       type: DataTypes.INTEGER,
@@ -19,8 +19,8 @@ module.exports = (sequelize, DataTypes) => {
     spamCount: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue : 0,
-    }
+      defaultValue: 0,
+    },
   });
 
   return globaldbs;

@@ -1,87 +1,85 @@
-const express = require('express');
-const dotenv = require('dotenv');
+// Express app imports
+const express = require("express");
+const dotenv = require("dotenv");
 const app = express();
+
+// for security of api
+const xss = require("xss-clean");
+const cors = require("cors");
+const compression = require("compression");
+const cookieParser = require("cookie-parser");
+const rateLimit = require("express-rate-limit");
+
+// imports for files used in app
 const db = require("./Models");
-const { users , contactlists } = require('./Models');
-const appRoutes = require('./Routes/appRoutes');
-const AppError = require('./utils/apperror');
-const userRoutes = require('./Routes/userRoutes');
-const PORT = process.env.PORT || 8000
+const AppError = require("./utils/apperror");
+const appRoutes = require("./Routes/appRoutes");
+const userRoutes = require("./Routes/userRoutes");
+const helpingRoutes = require("./Routes/helpingRoutes");
+const globalErrorHandler = require("./Controllers/errorController");
 
-dotenv.config({ path: './config.env' });
+// Node modules requirements for app
+const PORT = process.env.PORT || 8000;
+const path = require("path");
+const fs = require("fs");
 
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+// setting .env file
+dotenv.config({ path: "./config.env" });
 
-app.use('/api/app', appRoutes);
-app.use('/api/user', userRoutes);
+// To prevent api from XSS
+app.use(xss());
 
+// to allow cors in the server so that only trusted urls are allowed
+app.use(cors());
+app.options("*", cors());
+
+// limiter for per hour api call is 100
+const limiter = rateLimit({
+  max: 100,
+  windowMs: 60 * 60 * 1000,
+  message: "Too many requests from this IP. Please try after an hour",
+});
+app.use("/api", limiter);
+
+// For payloads
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+
+// give html response on / route
+app.get("/", (req, res) => {
+  const filePath = path.join(__dirname, "landingPage.html");
+  fs.readFile(filePath, "utf8", (err, data) => {
+    if (err) {
+      console.error("Error reading landingPage.html file:", err);
+      res.status(500).send("Internal Server Error");
+      return;
+    }
+    res.send(data);
+  });
+});
+
+// for cookie parsing
+app.use(cookieParser());
+
+// for sending the response in compressed format
+app.use(compression());
+
+// routers
+app.use("/api/app", appRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/helper", helpingRoutes);
+
+// database connection and port listening
 db.sequelize.sync().then((req) => {
   app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
   });
-})
+});
 
-
-app.all('*', (req, res, next) => {
-  // res.status(404).json({
-  //   staus: 'fail',
-  //   message: `cant find the ${req.originalUrl} on the server`,
-  // });
-
+// for every other url give a error json
+app.all("*", (req, res, next) => {
   next(new AppError(`cant find the ${req.originalUrl} on the server`, 404));
 });
-const sendErrorDev = (err, req, res) => {
-  // console.log(req.originalUrl);
-  if (req.originalUrl.startsWith('/api')) {
-    res.status(err.statusCode).json({
-      status: err.status,
-      error: err,
-      message: err.message,
-      stack: err.stack,
-    });
-  }
-};
 
-const sendErrorProd = (err, req, res) => {
-  if (err.isOperational) {
-    return res.status(err.statusCode).json({
-      status: err.status,
-      message: err.message,
-    });
-  }
-
-  return res.status(500).json({
-    status: 'error',
-    message: 'Something went wrong!',
-  });
-};
-
-const handleJwtError = () =>
-  new AppError('Invalid token. please log in again', 401);
-const handleJwtExpiredError = () =>
-  new AppError('Expired token. please log in again', 401);
-
-const handleDBError = (err) => {
-  const message = `Database issue...! ${err.errors?.type}, ${err.errors?.message}`;
-  return new AppError("Database issue. Please enter correct values", 400);
-};
-
-app.use((err, req, res, next) => {
-  //   console.log(err.stack);
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
-
-  if (process.env.NODE_ENV === 'development') {
-    sendErrorDev(err, req, res);
-  } 
-  else if (process.env.NODE_ENV === 'production') {
-    let error = { ...err, name: err.name, message: err.message };
-
-    if (error.name.startsWith("Sequelize")) error = handleDBError(error);
-    if (error.name === 'JsonWebTokenError') error = handleJwtError();
-    if (error.name === 'TokenExpiredError') error = handleJwtExpiredError();
-    
-    sendErrorProd(error, req, res);
-  }
-})
+// error handler
+app.use(globalErrorHandler);
